@@ -16,10 +16,8 @@ class DoublyLinkedList {
 
     append(data) {
         const node = new Node(data);
-        if (!this.head) {
-            this.head = node;
-            this.tail = node;
-        } else {
+        if (!this.head) { this.head = node; this.tail = node; }
+        else {
             node.prev = this.tail;
             this.tail.next = node;
             this.tail = node;
@@ -29,10 +27,8 @@ class DoublyLinkedList {
 
     prepend(data) {
         const node = new Node(data);
-        if (!this.head) {
-            this.head = node;
-            this.tail = node;
-        } else {
+        if (!this.head) { this.head = node; this.tail = node; }
+        else {
             node.next = this.head;
             this.head.prev = node;
             this.head = node;
@@ -69,20 +65,14 @@ class DoublyLinkedList {
     toArray() {
         const result = [];
         let current = this.head;
-        while (current) {
-            result.push(current.data);
-            current = current.next;
-        }
+        while (current) { result.push(current.data); current = current.next; }
         return result;
     }
 
     toReverseArray() {
         const result = [];
         let current = this.tail;
-        while (current) {
-            result.push(current.data);
-            current = current.prev;
-        }
+        while (current) { result.push(current.data); current = current.prev; }
         return result;
     }
 
@@ -90,9 +80,12 @@ class DoublyLinkedList {
         const result = [];
         let current = this.head;
         while (current) {
-            if (current.data.title.toLowerCase().includes(keyword.toLowerCase())) {
-                result.push(current.data);
-            }
+            const d = current.data;
+            if (
+                d.title.toLowerCase().includes(keyword.toLowerCase()) ||
+                d.client.toLowerCase().includes(keyword.toLowerCase()) ||
+                d.category.toLowerCase().includes(keyword.toLowerCase())
+            ) result.push(d);
             current = current.next;
         }
         return result;
@@ -103,6 +96,33 @@ class DoublyLinkedList {
         while (current) {
             if (current.data.id === id) {
                 current.data.completed = !current.data.completed;
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
+
+    // NEW — update equipment checklist inside a node
+    updateEquipment(id, equipment, equipmentChecked) {
+        let current = this.head;
+        while (current) {
+            if (current.data.id === id) {
+                current.data.equipment = equipment;
+                current.data.equipmentChecked = equipmentChecked;
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
+
+    // NEW — update budget spent inside a node
+    updateBudget(id, spent) {
+        let current = this.head;
+        while (current) {
+            if (current.data.id === id) {
+                current.data.spent = parseFloat(spent);
                 return true;
             }
             current = current.next;
