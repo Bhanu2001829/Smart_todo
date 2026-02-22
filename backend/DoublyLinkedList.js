@@ -78,13 +78,14 @@ class DoublyLinkedList {
 
     search(keyword) {
         const result = [];
+        const kw = keyword.toLowerCase();
         let current = this.head;
         while (current) {
             const d = current.data;
             if (
-                d.title.toLowerCase().includes(keyword.toLowerCase()) ||
-                d.client.toLowerCase().includes(keyword.toLowerCase()) ||
-                d.category.toLowerCase().includes(keyword.toLowerCase())
+                d.title.toLowerCase().includes(kw) ||
+                d.client.toLowerCase().includes(kw) ||
+                d.category.toLowerCase().includes(kw)
             ) result.push(d);
             current = current.next;
         }
@@ -103,26 +104,27 @@ class DoublyLinkedList {
         return false;
     }
 
-    // NEW — update equipment checklist inside a node
-    updateEquipment(id, equipment, equipmentChecked) {
+    // equipment is now array of { name, cost, checked }
+    // spent = sum of cost of checked items + extraExpenses
+    updateEquipment(id, equipment, extraExpenses) {
         let current = this.head;
         while (current) {
             if (current.data.id === id) {
                 current.data.equipment = equipment;
-                current.data.equipmentChecked = equipmentChecked;
-                return true;
-            }
-            current = current.next;
-        }
-        return false;
-    }
 
-    // NEW — update budget spent inside a node
-    updateBudget(id, spent) {
-        let current = this.head;
-        while (current) {
-            if (current.data.id === id) {
-                current.data.spent = parseFloat(spent);
+                // Calculate gear cost from checked items
+                const gearCost = equipment
+                    .filter(e => e.checked === true)
+                    .reduce((sum, e) => sum + (parseFloat(e.cost) || 0), 0);
+
+                const extra = parseFloat(extraExpenses) || 0;
+
+                // Save everything back to the node
+                current.data.spent         = gearCost + extra;
+                current.data.extraExpenses = extra;
+                current.data.gearCost      = gearCost;
+
+                console.log(`✅ Task ${id} | Gear: ${gearCost} | Extra: ${extra} | Total Spent: ${current.data.spent}`);
                 return true;
             }
             current = current.next;

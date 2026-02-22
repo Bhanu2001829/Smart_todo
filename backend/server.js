@@ -9,26 +9,23 @@ app.use(express.json());
 const list = new DoublyLinkedList();
 let idCounter = 1;
 
-// GET all tasks
 app.get('/tasks', (req, res) => {
     res.json({ tasks: list.toArray(), size: list.size });
 });
 
-// GET reverse
 app.get('/tasks/reverse', (req, res) => {
     res.json({ tasks: list.toReverseArray(), size: list.size });
 });
 
-// SEARCH
 app.get('/tasks/search', (req, res) => {
     res.json(list.search(req.query.keyword || ''));
 });
 
-// ADD task
 app.post('/tasks', (req, res) => {
     const { title, description, priority, client, category, deadline, budget, equipment } = req.body;
     if (!title) return res.status(400).json({ error: 'Title is required' });
 
+    // equipment comes in as [{ name, cost, checked: false }]
     const task = {
         id: idCounter++,
         title,
@@ -37,10 +34,10 @@ app.post('/tasks', (req, res) => {
         client: client || 'No Client',
         category: category || 'General',
         deadline: deadline || null,
-        budget: parseFloat(budget) || 0,          // NEW - budget amount
-        spent: 0,                                  // NEW - amount spent
-        equipment: equipment || [],                // NEW - gear list
-        equipmentChecked: [],                      // NEW - checked gear
+        budget: parseFloat(budget) || 0,
+        spent: 0,
+        extraExpenses: 0,
+        equipment: equipment || [],   // [{ name, cost, checked }]
         completed: false,
         createdAt: new Date().toLocaleTimeString(),
         createdDate: new Date().toLocaleDateString()
@@ -52,36 +49,38 @@ app.post('/tasks', (req, res) => {
     res.json({ success: true, tasks: list.toArray() });
 });
 
-// DELETE task
 app.delete('/tasks/:id', (req, res) => {
     const deleted = list.delete(parseInt(req.params.id));
     res.json({ success: deleted, tasks: list.toArray() });
 });
 
-// UNDO delete
 app.post('/tasks/undo', (req, res) => {
     const success = list.undoDelete();
     res.json({ success, tasks: list.toArray() });
 });
 
-// COMPLETE task
 app.patch('/tasks/:id/complete', (req, res) => {
     const success = list.complete(parseInt(req.params.id));
     res.json({ success, tasks: list.toArray() });
 });
 
-// UPDATE equipment checklist
+// Updated — receives equipment array + extraExpenses, auto-calculates spent
 app.patch('/tasks/:id/equipment', (req, res) => {
-    const { equipment, equipmentChecked } = req.body;
-    const success = list.updateEquipment(parseInt(req.params.id), equipment, equipmentChecked);
-    res.json({ success, tasks: list.toArray() });
-});
+    const { equipment, extraExpenses } = req.body;
 
-// UPDATE budget spent
-app.patch('/tasks/:id/budget', (req, res) => {
-    const { spent } = req.body;
-    const success = list.updateBudget(parseInt(req.params.id), spent);
-    res.json({ success, tasks: list.toArray() });
+    console.log('Received equipment update:', JSON.stringify({ equipment, extraExpenses }));
+
+    const success = list.updateEquipment(
+        parseInt(req.params.id),
+        equipment || [],
+        extraExpenses || 0
+    );
+
+    const updatedTasks = list.toArray();
+    const updatedTask = updatedTasks.find(t => t.id === parseInt(req.params.id));
+    console.log('Updated task spent:', updatedTask?.spent);
+
+    res.json({ success, tasks: updatedTasks });
 });
 
 app.listen(5000, () => {
